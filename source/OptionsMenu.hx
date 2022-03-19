@@ -30,6 +30,13 @@ class FNFOption extends Alphabet {
 	public var checkboxChecked:Bool = false;
 	public var value:Array<AlphaCharacter> = [];
 	public var desc:String = "";
+	
+	public override function update(elapsed:Float) {
+		super.update(elapsed);
+		if (checkbox != null) {
+			checkbox.scale.set(FlxMath.lerp(checkbox.scale.x, 0.6, CoolUtil.wrapFloat(0.25 * 30 * elapsed, 0, 1)), FlxMath.lerp(checkbox.scale.y, 0.6, CoolUtil.wrapFloat(0.25 * 30 * elapsed, 0, 1)));
+		}
+	}
 
 	public function new(x:Float, y:Float, text:String, desc:String, updateOnSelected:Float->Void, checkBox:Bool = false, checkBoxChecked:Bool = false, value:String = "") {
 		super(x, y, text, true, false, FlxColor.WHITE);
@@ -57,6 +64,7 @@ class FNFOption extends Alphabet {
 		if (checkbox != null) {
 			// checkbox.animation.play("check", true, !checked);
 			checkbox.animation.play(checked ? "checked" : "unchecked", true);
+			checkbox.scale.set(0.6 * 1.15, 0.6 * 1.15);
 		}
 	}
 
@@ -101,6 +109,7 @@ class FNFOption extends Alphabet {
 					add(alphaCharacter);
 					alphaCharacter.y -= 60;
 					lastLetterPos += AlphaCharacter.widths[char] != null ? (Std.int(AlphaCharacter.widths[char] / 2)) : Std.int(alphaCharacter.width) + 5;
+					alphaCharacter.offset.x = 17.5;
 				case 2:
 					alphaCharacter.createSymbol(char);
 					alphaCharacter.updateHitbox();
@@ -130,7 +139,7 @@ typedef MenuCategory = {
 	public var name:String;
 	public var description:String;
 	public var options:Array<Option>;
-	public var center:Bool;
+	public var center:Bool;	
 }
 typedef Option = {
 	public var text:String;
@@ -336,6 +345,34 @@ class OptionsMenu extends MusicBeatState
 			value: function() {return "";}
 		});
 		gameplay.options.push({
+			text : "Reset Button",
+			description : "When checked, will allow the player to press R to blue ball itself.",
+			updateOnSelected: function(elapsed:Float, o:FNFOption) {
+				if (controls.ACCEPT) {
+					Settings.engineSettings.data.resetButton = !Settings.engineSettings.data.resetButton;
+					o.checkboxChecked = Settings.engineSettings.data.resetButton;
+					o.check(Settings.engineSettings.data.resetButton);
+				}
+			},
+			checkbox: true,
+			checkboxChecked: function() {return Settings.engineSettings.data.resetButton;},
+			value: function() {return "";}
+		});
+		gameplay.options.push({
+			text : "Ghost tapping",
+			description : "When unchecked, will miss everytime the player presses while there's no notes.",
+			updateOnSelected: function(elapsed:Float, o:FNFOption) {
+				if (controls.ACCEPT) {
+					Settings.engineSettings.data.ghostTapping = !Settings.engineSettings.data.ghostTapping;
+					o.checkboxChecked = Settings.engineSettings.data.ghostTapping;
+					o.check(Settings.engineSettings.data.ghostTapping);
+				}
+			},
+			checkbox: true,
+			checkboxChecked: function() {return Settings.engineSettings.data.ghostTapping;},
+			value: function() {return "";}
+		});
+		gameplay.options.push({
 			text : "Accuracy mode",
 			description : "Sets the accuracy mode. \"Simple\" means based on the rating, \"Complex\" means based on the press delay.",
 			updateOnSelected: function(elapsed:Float, o:FNFOption) {
@@ -438,6 +475,20 @@ class OptionsMenu extends MusicBeatState
 			value: function() {return "";}
 		});
 		guiOptions.options.push({
+			text : "Bump press delay",
+			description : "If checked, will do a bump animation on the press delay label everytime you hit a note. Enabled by default.",
+			updateOnSelected: function(elapsed:Float, o:FNFOption) {
+				if (controls.ACCEPT) {
+					Settings.engineSettings.data.animateMsLabel = !Settings.engineSettings.data.animateMsLabel;
+					o.checkboxChecked = Settings.engineSettings.data.animateMsLabel;
+					o.check(Settings.engineSettings.data.animateMsLabel);
+				}
+			},
+			checkbox: true,
+			checkboxChecked: function() {return Settings.engineSettings.data.animateMsLabel;},
+			value: function() {return "";}
+		});
+		guiOptions.options.push({
 			text : "Show accuracy",
 			description : "If enabled, will add your accuracy next to the score.",
 			updateOnSelected: function(elapsed:Float, o:FNFOption) {
@@ -481,7 +532,7 @@ class OptionsMenu extends MusicBeatState
 		});
 		guiOptions.options.push({
 			text : "Show ratings amount",
-			description : "If enabled, will add the number of notes hit for each rating at the bottom left of the screen.",
+			description : "If enabled, will add the number of notes hit for each rating at the right of the screen.",
 			updateOnSelected: function(elapsed:Float, o:FNFOption) {
 				if (controls.ACCEPT) {
 					Settings.engineSettings.data.showRatingTotal = !Settings.engineSettings.data.showRatingTotal;
@@ -537,7 +588,7 @@ class OptionsMenu extends MusicBeatState
 		});
 		guiOptions.options.push({
 			text : "Show watermark",
-			description : "When checked, will show a watermark at the bottom left of the screen with the mod name, the mod song and the Yoshi Engine version.",
+			description : "When checked, will show a watermark at the top right of the screen with the mod name, the mod song and the Yoshi Engine version.",
 			updateOnSelected: function(elapsed:Float, o:FNFOption) {
 				if (controls.ACCEPT) {
 					Settings.engineSettings.data.watermark = !Settings.engineSettings.data.watermark;
@@ -548,6 +599,46 @@ class OptionsMenu extends MusicBeatState
 			checkbox: true,
 			checkboxChecked: function() {return Settings.engineSettings.data.watermark;},
 			value: function() {return "";}
+		});
+		guiOptions.options.push({
+			text : "Minimal mode",
+			description : "When checked, will minimize the Score Text width.
+[When Disabled] Score: 123456 | Misses: 0 | Accuracy: 100% (Simple) | Average: 5ms | S (MFC)
+[When Enabled] 123456 pts | 0 Misses | 100% (S) | ~ 5ms | S (MFC)",
+			updateOnSelected: function(elapsed:Float, o:FNFOption) {
+				if (controls.ACCEPT) {
+					Settings.engineSettings.data.minimizedMode = !Settings.engineSettings.data.minimizedMode;
+					o.checkboxChecked = Settings.engineSettings.data.minimizedMode;
+					o.check(Settings.engineSettings.data.minimizedMode);
+				}
+			},
+			checkbox: true,
+			checkboxChecked: function() {return Settings.engineSettings.data.minimizedMode;},
+			value: function() {return "";}
+		});
+		
+		guiOptions.options.push({
+			text : "Score Text Size",
+			description : "Sets the score text size. 16 is base game size, 20 is Psych size. Defaults to 18.",
+			updateOnSelected: function(elapsed:Float, o:FNFOption) {
+				var changed = false;
+				if (controls.LEFT_P) {
+					Settings.engineSettings.data.scoreTextSize -= 1;
+					changed = true;
+				}
+				if (controls.RIGHT_P) {
+					Settings.engineSettings.data.scoreTextSize += 1;
+					changed = true;
+				}
+				if (changed) {
+					if (Settings.engineSettings.data.scoreTextSize < 8) Settings.engineSettings.data.scoreTextSize = 8;
+					if (Settings.engineSettings.data.scoreTextSize > 40) Settings.engineSettings.data.scoreTextSize = 40;
+					o.setValue('${Std.string(Settings.engineSettings.data.scoreTextSize)}');
+				}
+			},
+			checkbox: false,
+			checkboxChecked: function() {return false;},
+			value: function() {return '${Std.string(Settings.engineSettings.data.scoreTextSize)}';}
 		});
 		
 		settings.push(guiOptions);
@@ -600,6 +691,43 @@ class OptionsMenu extends MusicBeatState
 			value: function() {return "";}
 		});
 		customisation.options.push({
+			text : "Enable Note Motion Blur",
+			description : "Check this to enable motion blur on notes. If enabled, will make the notes smoother, but can slow down the graphics. Defaults to disabled.",
+			updateOnSelected: function(elapsed:Float, o:FNFOption) {
+				if (controls.ACCEPT) {
+					Settings.engineSettings.data.noteMotionBlurEnabled = !Settings.engineSettings.data.noteMotionBlurEnabled;
+					o.checkboxChecked = Settings.engineSettings.data.noteMotionBlurEnabled;
+					o.check(Settings.engineSettings.data.noteMotionBlurEnabled);
+				}
+			},
+			checkbox: true,
+			checkboxChecked: function() {return Settings.engineSettings.data.noteMotionBlurEnabled;},
+			value: function() {return "";}
+		});
+		customisation.options.push({
+			text : "Note Motion Blur Multiplier",
+			description : "The multiplier of how blurry the notes will get when Enable Motion Blur is enabled. If you think the notes still feels like stuttering, increasing this option may help. Higher values means blurrier notes. Defaults to 1.",
+			updateOnSelected: function(elapsed:Float, o:FNFOption) {
+				var changed = false;
+				if (controls.LEFT_P) {
+					Settings.engineSettings.data.noteMotionBlurMultiplier -= 0.1;
+					changed = true;
+				}
+				if (controls.RIGHT_P) {
+					Settings.engineSettings.data.noteMotionBlurMultiplier += 0.1;
+					changed = true;
+				}
+				if (changed) {
+					if (Settings.engineSettings.data.noteMotionBlurMultiplier < 0.1) Settings.engineSettings.data.noteMotionBlurMultiplier = 0.1;
+					if (Settings.engineSettings.data.noteMotionBlurMultiplier > 3) Settings.engineSettings.data.noteMotionBlurMultiplier = 3;
+					o.setValue(Std.string(FlxMath.roundDecimal(Settings.engineSettings.data.noteMotionBlurMultiplier, 1)));
+				}
+			},
+			checkbox: false,
+			checkboxChecked: function() {return false;},
+			value: function() {return Std.string(FlxMath.roundDecimal(Settings.engineSettings.data.noteMotionBlurMultiplier, 1));}
+		});
+		customisation.options.push({
 			text : "Transparent note tails",
 			description : "If enabled, will make sustain notes (note tails) semi-transparent.",
 			updateOnSelected: function(elapsed:Float, o:FNFOption) {
@@ -630,8 +758,8 @@ class OptionsMenu extends MusicBeatState
 		
 
 		customisation.options.push({
-			text : "Customize your arrows",
-			description : "Select this to customize your arrow colors.",
+			text : "Customize Note Colors",
+			description : "Select this to customize note colors.",
 			updateOnSelected: function(elapsed:Float, o:FNFOption) {
 				if (controls.ACCEPT) {
 					FlxG.switchState(new OptionsNotesColors());
@@ -792,13 +920,13 @@ class OptionsMenu extends MusicBeatState
 
 	function addPerformanceCategory() {
 		var performance:MenuCategory = {
-			name : "Optimisation and Performances",
+			name : "Graphic Settings",
 			description : "Optimise the engine with memory and graphics settings.",
 			options : [],
 			center : false
 		};
 		performance.options.push({
-			text : "[Optimisation and Performances]",
+			text : "[Graphic Settings]",
 			description : "",
 			updateOnSelected: function(elapsed:Float, o:FNFOption) {
 				
@@ -806,6 +934,37 @@ class OptionsMenu extends MusicBeatState
 			checkbox: false,
 			checkboxChecked: function() {return false;},
 			value: function() {return "";}
+		});
+		
+		var stageQualities = ["Best", "High", "Low", "Medium"];
+		performance.options.push(
+		{
+			text : "Stage Quality",
+			description : "Sets the Stage Quality of the game. You can choose between 4 different types:
+- Low: No antialiasing, no bitmap smoothing
+- Medium: 2x2 pixel grid antialiasing, no bitmap smoothing
+- High: 4x4 pixel grid antialiasing, smooths bitmaps if the game is static
+- Best: 4x4 pixel grid antialiasing, always smooth bitmaps",
+			updateOnSelected: function(elapsed:Float, o:FNFOption) {
+				var changed = false;
+				if (controls.RIGHT_P) {
+					changed = true;
+					Settings.engineSettings.data.stageQuality++;
+				}
+				if (controls.LEFT_P) {
+					changed = true;
+					Settings.engineSettings.data.stageQuality--;
+				}
+				if (changed) {
+					if (Settings.engineSettings.data.stageQuality < 0) Settings.engineSettings.data.stageQuality = stageQualities.length - 1;
+					else if (Settings.engineSettings.data.stageQuality >= stageQualities.length) Settings.engineSettings.data.stageQuality = 0;
+					o.setValue(stageQualities[Settings.engineSettings.data.stageQuality]);
+					FlxG.game.stage.quality = Settings.engineSettings.data.stageQuality;
+				}
+			},
+			checkbox: false,
+			checkboxChecked: function() {return false;},
+			value: function() {return stageQualities[Settings.engineSettings.data.stageQuality];}
 		});
 		
 		performance.options.push(
@@ -917,7 +1076,8 @@ class OptionsMenu extends MusicBeatState
 			updateOnSelected: function(elapsed:Float, o:FNFOption) {
 				if (controls.ACCEPT) {
 					Paths.clearCache();
-					o.setValue("Cache Deleted");
+					Paths.clearModCache();
+					o.setValue("Cache Cleared");
 				}
 			},
 			checkbox: false,
@@ -1001,6 +1161,34 @@ class OptionsMenu extends MusicBeatState
 			checkboxChecked: function() {return Settings.engineSettings.data.autopause;},
 			value: function() {return "";}
 		});
+		misc.options.push({
+			text : "Separate mods in menus",
+			description : "If checked, will separate each mod into their own respective list. For example, if the \"Friday Night Funkin'\" mod is selected, only songs and weeks from the Friday Night Funkin' mod will be shown in the menus. Mods with menu scripts will have this option on by default.",
+			updateOnSelected: function(elapsed:Float, o:FNFOption) {
+				if (controls.ACCEPT) {
+					Settings.engineSettings.data.freeplayShowAll = !Settings.engineSettings.data.freeplayShowAll;
+					o.checkboxChecked = !Settings.engineSettings.data.freeplayShowAll;
+					o.check(!Settings.engineSettings.data.freeplayShowAll);
+				}
+			},
+			checkbox: true,
+			checkboxChecked: function() {return !Settings.engineSettings.data.freeplayShowAll;},
+			value: function() {return "";}
+		});
+		misc.options.push({
+			text : "Auto add new installed mods",
+			description : "If checked, will separate each mod into their own respective list. For example, if the \"Friday Night Funkin'\" mod is selected, only songs and weeks from the Friday Night Funkin' mod will be shown in the menus. Mods with menu scripts will have this option on by default.",
+			updateOnSelected: function(elapsed:Float, o:FNFOption) {
+				if (controls.ACCEPT) {
+					Settings.engineSettings.data.autoSwitchToLastInstalledMod = !Settings.engineSettings.data.autoSwitchToLastInstalledMod;
+					o.checkboxChecked = Settings.engineSettings.data.autoSwitchToLastInstalledMod;
+					o.check(Settings.engineSettings.data.autoSwitchToLastInstalledMod);
+				}
+			},
+			checkbox: true,
+			checkboxChecked: function() {return Settings.engineSettings.data.autoSwitchToLastInstalledMod;},
+			value: function() {return "";}
+		});
 		// misc.options.push({
 		// 	text : "Use new charter",
 		// 	updateOnSelected: function(elapsed:Float, o:FNFOption) {
@@ -1057,19 +1245,19 @@ class OptionsMenu extends MusicBeatState
 			checkboxChecked: function() {return Settings.engineSettings.data.developerMode;},
 			value: function() {return "";}
 		});
-		dev.options.push({
-			text : "Move camera in Stage Editor",
-			description : "If checked, will automatically move the camera to the right in Stage Editor, allowing the user to access more space. If you find that effect annoying, uncheck this option.",
-			updateOnSelected: function(elapsed:Float, o:FNFOption) {
-				if (controls.ACCEPT) {
-					Settings.engineSettings.data.moveCameraInStageEditor = !Settings.engineSettings.data.moveCameraInStageEditor;
-					o.check(Settings.engineSettings.data.moveCameraInStageEditor);
-				}
-			},
-			checkbox: true,
-			checkboxChecked: function() {return Settings.engineSettings.data.moveCameraInStageEditor;},
-			value: function() {return "";}
-		});
+		// dev.options.push({
+		// 	text : "Move camera in Stage Editor",
+		// 	description : "If checked, will automatically move the camera to the right in Stage Editor, allowing the user to access more space. If you find that effect annoying, uncheck this option.",
+		// 	updateOnSelected: function(elapsed:Float, o:FNFOption) {
+		// 		if (controls.ACCEPT) {
+		// 			Settings.engineSettings.data.moveCameraInStageEditor = !Settings.engineSettings.data.moveCameraInStageEditor;
+		// 			o.check(Settings.engineSettings.data.moveCameraInStageEditor);
+		// 		}
+		// 	},
+		// 	checkbox: true,
+		// 	checkboxChecked: function() {return Settings.engineSettings.data.moveCameraInStageEditor;},
+		// 	value: function() {return "";}
+		// });
 		settings.push(dev);
 	}
 	
@@ -1172,22 +1360,34 @@ class OptionsMenu extends MusicBeatState
 		// FlxAtlasFrames.fromTexturePackerJson()
 		
 
-		var yBG:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuBGYoshi'));
-		yBG.setGraphicSize(Std.int(yBG.width * 1.1));
+		// var yBG:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuBGYoshi'));
+		// yBG.setGraphicSize(Std.int(yBG.width * 1.1));
+		// yBG.updateHitbox();
+		// yBG.screenCenter();
+		var yBG = CoolUtil.addBG(this);
+		yBG.x = -80;
+		yBG.scrollFactor.x = 0;
+		yBG.scrollFactor.y = 0.18;
+		yBG.scale.x = yBG.scale.y = 1.2;
 		yBG.updateHitbox();
 		yBG.screenCenter();
-		yBG.y = -menuBGy + 23;
-		yBG.antialiasing = true;
+		yBG.y -= menuBGy;
 		add(yBG);
 
-		var menuBG:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
+		// var menuBG:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
+		var menuBG = CoolUtil.addWhiteBG(this);
 		menuBG.color = 0xFFfd719b;
-		// menuBG.color = 0xFF494949;
-		menuBG.setGraphicSize(Std.int(menuBG.width * 1.1));
+		menuBG.x = -80;
+		menuBG.scrollFactor.x = 0;
+		menuBG.scrollFactor.y = 0.18;
+		menuBG.scale.x = menuBG.scale.y = 1.2;
 		menuBG.updateHitbox();
 		menuBG.screenCenter();
-		menuBG.y = -menuBGy + 23;
-		// menuBG.color.
+		menuBG.y -= menuBGy;
+		// menuBG.color = 0xFF494949;
+		// menuBG.setGraphicSize(Std.int(menuBG.width * 1.1));
+		// menuBG.updateHitbox();
+		// menuBG.screenCenter();
 		menuBG.antialiasing = true;
 		add(menuBG);
 
@@ -1327,7 +1527,7 @@ class OptionsMenu extends MusicBeatState
 		if (controls.DOWN_P)
 			changeSelection(1);
 		
-		optionsAlphabets.y = FlxMath.lerp(optionsAlphabets.y, (FlxG.height / 2) - (69 / 2) - (curSelected * 80), CoolUtil.wrapFloat(0.1 / 60 / elapsed, 0, 1));
+		optionsAlphabets.y = FlxMath.lerp(optionsAlphabets.y, (FlxG.height / 2) - (69 / 2) - (curSelected * 80), CoolUtil.wrapFloat(0.1 * 60 * elapsed, 0, 1));
 		
 
 		for (i in 0...optionsAlphabets.members.length) {
@@ -1394,6 +1594,6 @@ class OptionsMenu extends MusicBeatState
 		// FlxTween.tween(optionsAlphabets, {y: (FlxG.height / 2) - (69 / 2) - (curSelected * 80)}, 0.1, {ease : FlxEase.quadInOut});
 		// optionsAlphabets.y = ;
 
-		FlxG.sound.play(Paths.sound('scrollMenu'), 0.4);
+		CoolUtil.playMenuSFX(0);
 	}
 }

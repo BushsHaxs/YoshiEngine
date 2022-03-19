@@ -1,6 +1,7 @@
 import flixel.util.FlxColor;
 import flixel.text.FlxText;
 import haxe.Json;
+import openfl.utils.Assets;
 import sys.FileSystem;
 import flixel.FlxG;
 import flixel.FlxSprite;
@@ -51,27 +52,27 @@ class CreditsState extends MusicBeatState {
         add(socialThingy);
 
         camFollow = new FlxSprite(FlxG.width / 2, 0);
-        FlxG.camera.follow(camFollow, LOCKON, 0.04);
+        FlxG.camera.follow(camFollow, LOCKON, 0.08);
         FlxG.camera.zoom = 0.75;
 
         var mFolder = Paths.modsPath;
         var y = 0;
 
         var mods = FileSystem.readDirectory(mFolder);
-        mods.insert(0, "../assets/");
-        for(mod in mods) {
-            if (FileSystem.exists('$mFolder/$mod/credits.json')) {
+        mods.insert(0, "\\");
+        for (mod in mods) {
+			var path:String = Paths.getPath('credits.json', TEXT, mod == "\\" ? "preload" : 'mods/$mod');
+            if (Assets.exists(path)) {
                 var json:JSONShit = null;
                 try {
-                    
-                    json = Json.parse(Paths.getTextOutsideAssets('$mFolder/$mod/credits.json'));
+                    json = Json.parse(Assets.getText(Paths.getPath('credits.json', TEXT, mod == "\\" ? "preload" : 'mods/$mod')));
                 } catch(e) {
-                    PlayState.log.push('Failed to parse credits json for $mod.\n$e');
+                    PlayState.trace('Failed to parse credits json for $mod.\n$e');
                 }
 
                 if (json != null) {
                     y++;
-                    var modTitle:Alphabet = new Alphabet(0, 125 * y, (mod == "../assets/") ? "Yoshi Engine" : ModSupport.getModName(mod), true, false);
+                    var modTitle:Alphabet = new Alphabet(0, 125 * y, (mod == "\\") ? "Yoshi Engine" : ModSupport.getModName(mod), true, false);
                     modTitle.x = 640 - (modTitle.width / 2);
                     add(modTitle);
                     y++;
@@ -84,7 +85,8 @@ class CreditsState extends MusicBeatState {
                         var icon:FlxSprite = new FlxSprite(modMakerAlphabet.x - 100, modMakerAlphabet.y + (modMakerAlphabet.height / 2) - (125 / 2));
                         var iconPath = modMaker.icon;
                         if (iconPath != null) {
-                            var tex = Paths.getBitmapOutsideAssets('$mFolder/$mod/images/$iconPath.png');
+                            // var tex = Paths.getBitmapOutsideAssets('$mFolder/$mod/images/$iconPath.png');
+                            var tex = Paths.image(iconPath, mod == "\\" ? 'preload' : 'mods/$mod');
                             if (tex != null) {
                                 icon.loadGraphic(tex);
                                 // icon.x -= 110;
@@ -161,7 +163,7 @@ class CreditsState extends MusicBeatState {
                 }
             }
         }
-        FlxG.sound.play(Paths.sound('scrollMenu'), 0.4);
+        CoolUtil.playMenuSFX(0);
         changeSocial();
     }
     public function changeSocial(curChange:Int = 0) {
@@ -204,7 +206,7 @@ class CreditsState extends MusicBeatState {
         }
 
         if (controls.BACK) {
-			FlxG.sound.play(Paths.sound('cancelMenu'));
+			CoolUtil.playMenuSFX(2);
             FlxG.switchState(new MainMenuState());
         }
     }

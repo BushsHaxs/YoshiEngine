@@ -1,6 +1,9 @@
 package;
 
 // import sys.io.File;
+import mod_support_stuff.FlxColor_Helper;
+import Script.HScript;
+import openfl.utils.Assets;
 import haxe.macro.ExprTools.ExprArrayTools;
 import haxe.Json;
 import sys.FileSystem;
@@ -132,6 +135,10 @@ class Character extends FlxSprite
 		
 		var p = Paths.getCharacterFolderPath(curCharacter) + "/Character";
 		characterScript = Script.create(p);
+		if (characterScript == null) {
+			trace(Paths.getCharacterFolderPath(curCharacter) + "/Character is missing");
+			characterScript = new HScript();
+		}
 		characterScript.setVariable("curCharacter", curCharacter);
 		characterScript.setVariable("character", this);
 		characterScript.setVariable("textureOverride", textureOverride);
@@ -204,6 +211,7 @@ class Character extends FlxSprite
 	public function loadJSON(overrideFuncs:Bool) {
 		
 		var charFull = CoolUtil.getCharacterFull(curCharacter, PlayState.songMod);
+		/*
 		var path = '${Paths.modsPath}/${charFull[0]}/characters/${charFull[1]}/Character.json';
 		if (!FileSystem.exists(path)) return;
 		try {
@@ -212,6 +220,18 @@ class Character extends FlxSprite
 			return;
 		}
 		if (json == null) return;
+		*/
+		var path = Paths.getPath('characters/${charFull[1]}/character.json', TEXT, 'mods/${charFull[0]}');
+		if (!Assets.exists(path)) {
+			PlayState.trace('Character JSON for ${charFull.join(":")} doesn\'t exist.');
+			return;
+		}
+		try {
+			json = Json.parse(Assets.getText(path));
+		} catch(e) {
+			PlayState.trace('Character JSON for ${charFull.join(":")} is invalid\n\n$e.');
+			return;
+		}
 		load(overrideFuncs);
 	}
 
@@ -292,6 +312,7 @@ class Character extends FlxSprite
 				return returnArray;
 			});
 		}
+		scale.set(json.scale, json.scale);
 	}
 
 	public function getColors(altAnim:Bool = false):Array<FlxColor>
@@ -302,7 +323,16 @@ class Character extends FlxSprite
 			Settings.engineSettings.data.arrowColor2,
 			Settings.engineSettings.data.arrowColor3
 		];
-		var c:Array<Int> = characterScript.executeFunc("getColors", [altAnim]);
+		var c2:Array<Dynamic> = characterScript.executeFunc("getColors", [altAnim]);
+		if (c2 == null) c2 = [];
+		var c:Array<Int> = [];
+		for(e in c2) {
+			if (Std.isOfType(e, Int)) {
+				c.push(e);
+			} else if (Std.isOfType(e, FlxColor_Helper)) {
+				c.push(cast(e, FlxColor_Helper).color);
+			}
+		}
 		var invalid = false;
 		invalid = c == null;
 		if (!invalid) invalid = c.length < 1;
@@ -445,6 +475,7 @@ class Character extends FlxSprite
 	 */
 
 	public var lastNoteHitTime:Float = -60000;
+	private var unknownAnimsAlerted:Array<String> = [];
 	public function playAnim(AnimName:String, Force:Bool = false, Reversed:Bool = false, Frame:Int = 0):Void
 	{
 		if (AnimName.startsWith("sing")) {
@@ -457,7 +488,10 @@ class Character extends FlxSprite
 			animation.play(AnimName, Force, Reversed, Frame);
 			if (animation.getByName(AnimName) == null) {
 				trace(AnimName + " doesn't exist on character " + curCharacter);
-				PlayState.log.push('Character.playAnim: $AnimName doesn\'t exist on character $curCharacter');
+				if (!unknownAnimsAlerted.contains(AnimName)) {
+					PlayState.log.push('Character.playAnim: $AnimName doesn\'t exist on character $curCharacter');
+					unknownAnimsAlerted.push(AnimName);
+				}
 				return;
 			}
 			if (isPlayer && AnimName == "singLEFT" && flipX)

@@ -5,7 +5,7 @@ import sys.io.File;
 import flixel.group.FlxGroup;
 import lime.graphics.Image;
 import lime.app.Application;
-import ModSupport.ModConfig;
+
 import flixel.addons.transition.FlxTransitionableState;
 import lime.ui.FileDialogType;
 import openfl.display.BitmapData;
@@ -62,7 +62,7 @@ class NewModWizard extends MusicBeatState {
         tab.add(mod_description);
 
 		var label = new FlxUIText(10, mod_description.y + mod_description.height + 10, 620, "Titlebar Name");
-        var titlebarName = new FlxUIInputText(10, label.y + label.height, 500, "Friday Night Funkin - Mod Name");
+        var titlebarName = new FlxUIInputText(10, label.y + label.height, 500, "Friday Night Funkin' - Mod Name");
         tab.add(label);
         tab.add(titlebarName);
 
@@ -122,7 +122,15 @@ class NewModWizard extends MusicBeatState {
                 skinnableBFs: [],
                 BFskins: [],
                 GFskins: [],
-                locked: false
+                locked: false,
+                intro: {
+					bpm: 102,
+					authors: ['ninjamuffin99', 'phantomArcade', 'kawaisprite', 'evilsk8er'],
+					present: 'present',
+					assoc: ['In association', 'with'],
+					newgrounds: 'newgrounds',
+					gameName: ['Friday Night Funkin\'', 'Yoshi', 'Engine']
+                }
             }
 
             Toolbox.createMod(json, folderName, modIcon.pixels, icon.pixels);

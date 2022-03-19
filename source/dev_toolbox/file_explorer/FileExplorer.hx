@@ -1,5 +1,6 @@
 package dev_toolbox.file_explorer;
 
+import openfl.utils.Assets;
 import sys.io.Process;
 import haxe.io.Path;
 import sys.FileSystem;
@@ -18,6 +19,7 @@ enum FileExplorerType {
     HScript;
     Lua;
     OGG;
+	Script;
 }
 
 @:enum
@@ -55,6 +57,7 @@ class FileExplorer extends MusicBeatSubstate {
     var callback:String->Void;
 
     public function navigateTo(path:String) {
+
         for (e in spawnedElems) {
             remove(e);
             e.destroy();
@@ -62,6 +65,7 @@ class FileExplorer extends MusicBeatSubstate {
         spawnedElems = [];
         this.path = path;
         var p = '${Paths.modsPath}/$mod/$path';
+        #if trace_everything trace(p); #end
 
 
         // 256 + 20 = 276
@@ -71,6 +75,7 @@ class FileExplorer extends MusicBeatSubstate {
         var maxLength = 0;
         var dirs = [];
         var files = [];
+        // TODO
         for (f in FileSystem.readDirectory(p)) {
             if (FileSystem.isDirectory('$p/$f')) {
                 dirs.push(f);
@@ -93,17 +98,17 @@ class FileExplorer extends MusicBeatSubstate {
         for (k=>f in files) {
             var t:FileExplorerIcon = Unknown;
             t = switch(Path.extension(f).toLowerCase()) {
-                case "json":            JSON;
-                case "hx" | "hscript":  Haxe;
-                case "ogg" | "mp3":     Audio;
-                case "log" | "txt":     Text;
-                case "xml":             XML;
-                case "png":             Bitmap;
-                case "exe":             Executable;
-                case "lua":             Lua;
-                case "dll":             DLL;
-                case "mp4":             MP4;
-                default:                Unknown;
+                case "json":                    JSON;
+                case "hx" | "hscript" | "hsc":  Haxe;
+                case "ogg" | "mp3":             Audio;
+                case "log" | "txt":             Text;
+                case "xml":                     XML;
+                case "png":                     Bitmap;
+                case "exe":                     Executable;
+                case "lua":                     Lua;
+                case "dll":                     DLL;
+                case "mp4":                     MP4;
+                default:                        Unknown;
             }
             var el = new FileExplorerElement(f, t, () -> {
                 if (fileExt != "") {
@@ -177,6 +182,8 @@ class FileExplorer extends MusicBeatSubstate {
                 ".hx or .hscript script";
             case Lua:
                 ".lua script";
+            case Script:
+                "script";
             case OGG:
                 "OGG sound";
         }
@@ -193,7 +200,9 @@ class FileExplorer extends MusicBeatSubstate {
             case JSON:
                 "json";
             case HScript:
-                "hx;hscript";
+                "hx;hscript;hsc";
+            case Script:
+                "hx;hscript;hsc;lua";
             case Lua:
                 "lua";
             case OGG:
@@ -218,6 +227,7 @@ class FileExplorer extends MusicBeatSubstate {
         upButton.resize(20, 20);
 
         var refreshButton = new FlxUIButton(upButton.x + upButton.width + 10, 10, "", function() {
+			ModSupport.loadMod(mod);
             navigateTo(path);
         });
         refreshButton.resize(20, 20);

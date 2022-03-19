@@ -1,5 +1,6 @@
 package dev_toolbox;
 
+
 import Discord.DiscordClient;
 import discord_rpc.DiscordRpc;
 import dev_toolbox.toolbox_tabs.*;
@@ -19,7 +20,6 @@ import FreeplayState.FreeplaySongList;
 import openfl.display.PNGEncoderOptions;
 import sys.io.File;
 import openfl.display.BitmapData;
-import ModSupport.ModConfig;
 import lime.ui.FileDialogType;
 import sys.FileSystem;
 import flixel.util.FlxColor;
@@ -61,6 +61,13 @@ class ToolboxHome extends MusicBeatState {
     public var tabs:Map<String, ToolboxTab> = [];
 
     public override function new(mod:String) {
+        
+        FileSystem.createDirectory('${Paths.modsPath}/${ToolboxHome.selectedMod}/characters/');
+        FileSystem.createDirectory('${Paths.modsPath}/${ToolboxHome.selectedMod}/data/');
+        FileSystem.createDirectory('${Paths.modsPath}/${ToolboxHome.selectedMod}/images/');
+        FileSystem.createDirectory('${Paths.modsPath}/${ToolboxHome.selectedMod}/songs/');
+        FileSystem.createDirectory('${Paths.modsPath}/${ToolboxHome.selectedMod}/sounds/');
+        FileSystem.createDirectory('${Paths.modsPath}/${ToolboxHome.selectedMod}/music/');
         // FlxG.sound.playMusic(Paths.music("characterEditor", "preload"));
         #if desktop
             DiscordClient.changePresence("In the Toolbox", null, "Toolbox Icon");
@@ -77,7 +84,15 @@ class ToolboxHome extends MusicBeatState {
                 GFskins: [],
                 skinnableBFs : [],
                 skinnableGFs : [],
-                locked: false
+                locked: false,
+                intro: {
+					bpm: 102,
+					authors: ['ninjamuffin99', 'phantomArcade', 'kawaisprite', 'evilsk8er'],
+					present: 'present',
+					assoc: ['In association', 'with'],
+					newgrounds: 'newgrounds',
+					gameName: ['Friday Night Funkin\'', 'Yoshi', 'Engine']
+                }
             };
             ModSupport.modConfig[mod] = conf;
         }
@@ -90,6 +105,7 @@ class ToolboxHome extends MusicBeatState {
 			{name: "chars", label: 'Characters'},
 			{name: "weeks", label: 'Weeks'},
 			{name: "stages", label: 'Stages JSONs'},
+			{name: "songconf", label: 'Song Config'},
 		];
         UI_Tabs = new FlxUITabMenu(null, tabs, true);
         UI_Tabs.x = 0;
@@ -112,6 +128,7 @@ class ToolboxHome extends MusicBeatState {
         new WeeksTab(0, 22, this);
         new SongTab(0, 22, this);
         new StagesTab(0, 22, this);
+        new SongConfTab(0, 22, this);
 
         closeButton = new FlxUIButton(FlxG.width - 20, 0, "X", function() {
             FlxG.switchState(new ToolboxMain());

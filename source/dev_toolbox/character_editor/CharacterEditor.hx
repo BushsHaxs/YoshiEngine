@@ -9,7 +9,6 @@ import NoteShader.ColoredNoteShader;
 import haxe.Json;
 import sys.io.File;
 import sys.FileSystem;
-import ModSupport.CharacterSkin;
 import flixel.math.FlxPoint;
 import dev_toolbox.CharacterJSON.CharacterAnim;
 import flixel.FlxG;
@@ -58,6 +57,7 @@ class CharacterEditor extends MusicBeatState {
     var c:String = "";
     var arrows:Array<FlxClickableSprite> = [];
     var shadowCharacter:Character;
+    var usePlayerColors:FlxUICheckBox = null;
 
     var isPlayer:Bool = false;
     var usePlayerArrowColors:Bool = false;
@@ -153,7 +153,7 @@ class CharacterEditor extends MusicBeatState {
             healthIconSteps: [[20, 0], [0, 1]],
             flipX: isPlayer ? !character.flipX : character.flipX,
             healthbarColor: healthBar.color.toWebString(),
-            arrowColors: [
+            arrowColors: usePlayerColors.checked ? null : [
                 for (c in arrows) {
                     var shader = cast(c.shader, ColoredNoteShader);
                     FlxColor.fromRGBFloat(shader.r.value[0], shader.g.value[0], shader.b.value[0]).toWebString();
@@ -248,6 +248,7 @@ class CharacterEditor extends MusicBeatState {
         dad = new Character(100, 100, "Friday Night Funkin':dad");
         dad.color = 0xFF000000;
         dad.alpha = 1 / 3;
+        dad.visible = Settings.engineSettings.data.charEditor_showDadAndBF;
         add(dad);
 
         shadowCharacter = new Character(100, 100, '${ToolboxHome.selectedMod}:$char');
@@ -259,6 +260,7 @@ class CharacterEditor extends MusicBeatState {
         bf = new Boyfriend(770, 100, "Friday Night Funkin':bf");
         bf.color = 0xFF000000;
         bf.alpha = 1 / 3;
+        bf.visible = Settings.engineSettings.data.charEditor_showDadAndBF;
         add(bf);
 
 
@@ -420,7 +422,6 @@ class CharacterEditor extends MusicBeatState {
         showCharacterReferences = new FlxUICheckBox(anim.x + anim.width + 10, editAsPlayer.y + editAsPlayer.height + 10, null, null, "Show Dad and BF", 250, null, function() {
             Settings.engineSettings.data.charEditor_showDadAndBF = dad.visible = bf.visible = showCharacterReferences.checked;
         });
-        showCharacterReferences.checked = true;
         showCharacterReferences.scrollFactor.set();
         showCharacterReferences.checked = Settings.engineSettings.data.charEditor_showDadAndBF;
         add(showCharacterReferences);
@@ -607,14 +608,14 @@ class CharacterEditor extends MusicBeatState {
             if (c == 0) {
                 c = 0xFFFFFFFF;
             }
-            note.shader = new ColoredNoteShader(c.red, c.green, c.blue);
+            note.shader = new ColoredNoteShader(c.red, c.green, c.blue, false);
             arrowSettings.add(note);
             arrows.push(note);
         }
-        var usePlayerColors:FlxUICheckBox = null;
         usePlayerColors = new FlxUICheckBox(10, 70, null, null, "Use player's colors", 100, null, function() {
             usePlayerArrowColors = usePlayerColors.checked;
         });
+        if (character.json != null) usePlayerColors.checked = character.json.arrowColors == null;
         arrowSettings.add(usePlayerColors);
         characterSettingsTabs.addGroup(arrowSettings);
     }

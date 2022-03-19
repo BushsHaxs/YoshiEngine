@@ -49,6 +49,7 @@ class Note extends FlxSprite
 	public var noteType:Int = 0;
 
 	public var colored:Bool = false;
+	public var prevSusNote:Note = null;
 
 	public var sustainHealth:Float = 0.012;
 	// #if secret
@@ -91,10 +92,16 @@ class Note extends FlxSprite
 
 	public static var noteNumberSchemes:Map<Int, Array<NoteDirection>> = [
 		1 => [Up],
+		2 => [Left, Right],
+		3 => [Left, Up, Right],
 		4 => [Left, Down, Up, Right],
 		// 4 => [Down, Left, Right, Up], // lol
-		6 => [Left, Down, Right, Left, Up, Right],
-		9 => [Left, Down, Up, Right, Up, Left, Down, Up, Right]
+		5 => [Left, Down, Up, Up, Right],
+		6 => [Left, Up, Right, Left, Down, Right], // shaggy
+		7 => [Left, Up, Right, Up, Left, Down, Right],
+		8 => [Left, Down, Up, Right, Left, Down, Up, Right],
+		9 => [Left, Down, Up, Right, Up, Left, Down, Up, Right],
+		10 => [Left, Down, Up, Right, Up, Up, Left, Down, Up, Right]
 	];
 
 	public static var noteNumberScheme(get, null):Array<NoteDirection>;
@@ -201,9 +208,11 @@ class Note extends FlxSprite
 	}
 	public var noteOffset:FlxPoint = new FlxPoint(0,0);
 	public var enableRating:Bool = true;
-	public var altAnim:Bool = true;
+	public var altAnim:Bool = false;
 	public var engineSettings:Dynamic;
 	public var splashColor:FlxColor = 0xFFFFFFFF;
+	public var isLongSustain:Bool = false;
+
 	public function new(strumTime:Float, noteData:Int, ?prevNote:Note, ?sustainNote:Bool = false, ?mustHit = true, ?altAnim = false)
 	{
 		super();
@@ -241,11 +250,27 @@ class Note extends FlxSprite
 		// createNote();
 		script.setVariable("note", this);
 		script.executeFunc("create");
+		animation.play("scroll");
+		if (isSustainNote) {
+			if (prevNote != null)
+				if (prevNote.animation.curAnim.name == "holdend")
+					prevNote.animation.play("holdpiece");
+			animation.play("holdend");
+		}
+
 		if (colored) {
-			var customColors = (mustPress || engineSettings.customArrowColors_allChars) ? PlayState.current.boyfriend.getColors(altAnim) : PlayState.current.dad.getColors(altAnim);
-			var c = customColors[(noteData % (customColors.length - 1)) + 1];
-			this.shader = new ColoredNoteShader(c.red, c.green, c.blue);
-			this.splashColor = c;
+			if (Settings.engineSettings.data.rainbowNotes == true) {
+				var superCoolColor = new FlxColor(0xFFFF0000);
+				superCoolColor.hue = (strumTime / 5000 * 360) % 360;
+				this.shader = new ColoredNoteShader(superCoolColor.red, superCoolColor.green, superCoolColor.blue);
+				this.splashColor = superCoolColor;
+
+			} else {
+				var customColors = (mustPress || engineSettings.customArrowColors_allChars) ? PlayState.current.boyfriend.getColors(altAnim) : PlayState.current.dad.getColors(altAnim);
+				var c = customColors[(noteData % (customColors.length - 1)) + 1];
+				this.shader = new ColoredNoteShader(c.red, c.green, c.blue);
+				this.splashColor = c;
+			}
 		} else {
 			this.shader = new ColoredNoteShader(255, 255, 255);
 			cast(this.shader, ColoredNoteShader).enabled.value = [false];
@@ -338,6 +363,7 @@ class Note extends FlxSprite
 
 					prevNote.scale.y *= Conductor.stepCrochet / 100 * 1.5 * (engineSettings.customScrollSpeed ? engineSettings.scrollSpeed : PlayState.SONG.speed);
 					prevNote.updateHitbox();
+					prevNote.isLongSustain = true;
 			
 					if (engineSettings.downscroll) {
 						prevNote.offset.y = prevNote.height / 2;

@@ -5,6 +5,7 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.group.FlxSpriteGroup;
 import flixel.FlxSprite;
 import lime.graphics.Image;
+import lime.utils.Assets;
 import openfl.display.Application;
 import flixel.system.scaleModes.RatioScaleMode;
 import flixel.addons.transition.TransitionData;
@@ -14,12 +15,16 @@ import flixel.FlxG;
 import flixel.addons.transition.FlxTransitionableState;
 import flixel.addons.ui.FlxUIState;
 import flixel.math.FlxRect;
+import openfl.utils.Assets;
 
 typedef FlxSpriteTypedGroup = FlxTypedGroup<FlxSprite>;
 typedef FlxSpriteArray = Array<FlxSprite>;
 
+
 class MusicBeatState extends FlxUIState
 {
+	private var reloadModsState:Bool = false;
+
 	private var lastBeat:Float = 0;
 	private var lastStep:Float = 0;
 
@@ -29,21 +34,31 @@ class MusicBeatState extends FlxUIState
 
 	public static var defaultIcon:Image = null;
 
+	public override function onFocus() {
+		if (reloadModsState) {
+			super.onFocus();
+			if (Settings.engineSettings.data.alwaysCheckForMods) if (ModSupport.reloadModsConfig(false, false)) FlxG.resetState();	
+		}
+	}
+
 	public function new(?transIn:TransitionData, ?transOut:TransitionData) {
 		
-		if (Settings.engineSettings != null) {
-			if (Settings.engineSettings.data.developerMode) {
-				try {
-					Paths.clearCache();
-				} catch(e) {
+		if (Settings.engineSettings != null && Settings.engineSettings.data.developerMode) {
+			try {
+				Paths.clearCache();
+			} catch(e) {
 
-				}
 			}
+			ModSupport.reloadModsConfig(true);
 			Settings.engineSettings.flush();
+		} else {
+			ModSupport.reloadModsConfig(false);
 		}
-		if (FlxG.save.data != null) {
+		if (FlxG.save.data != null)
 			FlxG.save.flush();
-		}
+		if (Settings.engineSettings != null)
+			Settings.engineSettings.flush();
+
 		#if !android
 			@:privateAccess
 			FlxG.width = 1280;
@@ -54,12 +69,15 @@ class MusicBeatState extends FlxUIState
 		FlxG.scaleMode = new RatioScaleMode();
 		super(transIn, transOut);
 
-		if (defaultIcon == null) defaultIcon = Image.fromFile("assets/images/icon.png");
+		//if (defaultIcon == null) defaultIcon = Assets.getBitmapData(Paths.file('icon.png', IMAGE, 'mods/));
+		if (defaultIcon == null) defaultIcon = lime.utils.Assets.getImage(Paths.image("icon", "preload"));
 		lime.app.Application.current.window.title = "Friday Night Funkin' - Yoshi Engine";
 		if (PlayState.iconChanged) {
 			lime.app.Application.current.window.setIcon(defaultIcon);
 			PlayState.iconChanged = false;
 		}
+		
+    	FlxG.game.stage.quality = Settings.engineSettings.data.stageQuality;
 	}
 
 	inline function get_controls():Controls
@@ -158,7 +176,7 @@ class MusicBeatState extends FlxUIState
 		
 	}
 
-    function showMessage(title:String, text:String) {
+    public function showMessage(title:String, text:String) {
         var m = ToolboxMessage.showMessage(title, text);
         m.cameras = cameras;
         openSubState(m);

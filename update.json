@@ -1,21 +1,19 @@
 {
     "updateLog" : [
-        "1.5.1 : STAGE EDITOR + FIXES",
+        "1.7.0 - CUSTOM STATES AND MENUS",
         "",
-        "- /!\\ STAGE EDITOR ! (Only works with Json stages) Now edit your own stages without having to go through the troubles of testing over and over again !",
-        "- /!\\ CUSTOM TITLE SCREENS ! They change every 24 beats on the title screen soooo... Check the Friday Night Funkin' data/titlescreen.hx for an example",
-        "- /!\\ CUSTOM INTRO TEXTS ! Put your intro text in data/introText.txt !",
-        "- /!\\ OPTIMISATION UPDATE ! No more waiting 5 hours in front of the game after selecting story mode (idk if it's perfect tho)",
-        "- New Toolbox UI, enjoy !",
-        "- The engine will remember last Freeplay song you played",
-        "- If you ACCIDENTLY end a song that you took SO MUCH TIME to chart, you'll be redirected back to the charter.",
-        "- You can now compile it on Android without any problems (port not done yet, make sure to allow storage access in the phone's app settings)",
-        "- Added character shadow in Character Editor. That means you can use an animation of your character as a base to set the offset of the other ones",
-        "- Fixed the Tab button glitch on the Charter",
-        "- Freeplay song names now gets \"squished\" when they're too long",
-        "- Added offset",
-        "- Added a lots of events"
+        "- /!\\ Added Custom States",
+        "- /!\\ New updater! Yoshi Engine updates now can be installed in game (windows only for now, bg art by siivkoi)",
+        "- Added support for replaceable menu assets",
+        "- Fixed Downscroll's long strums behaving weirdly",
+        "- Pitch support for FlxSounds (including music)",
+        "- Fixed input system issues and note shaking.",
+        "- Fixed FlxBar and FlxCamera",
+        "- Removed akifox-asynchttp",
+        "- Fixed the Play Song feature in Freeplay",
+		"- Fixed Stage Editor import bug",
+        "- Fixed Vocals desync issue"
     ],
-    "version" : [1,5,1],
+    "version" : [1,7,0],
     "url" : "https://github.com/YoshiCrafter29/YoshiEngine/releases/latest"
 }
